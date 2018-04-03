@@ -30,8 +30,22 @@
       }
 
       .remark-code, .remark-inline-code {
-          font-family: 'Ubuntu Mono';
-          font-size: 1.4em;
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
+      }
+
+      .split-the-code>pre {
+          width: 49%;
+          height: 100%;
+          display: inline-block;
+          margin-right: 2px;
+          vertical-align: top;
+
+          height: 425px;
+      }
+
+      .split-the-code>pre>code {
+          height: 100%;
       }
 
       .bigger {
@@ -146,11 +160,110 @@ Marche aussi conceptuellement s'il y a plus d'étapes.
 
 ---
 
+class: split-the-code
+
 # Out-of-order
+
+```c
+int main(void) {
+    int  a = 0;
+    int* b = &a;
+    int  c = 5;
+
+    *b = 4;
+    a++;
+    c = c * c;
+
+    if (a == *b)
+        return a + c;
+
+    return 0;
+}
+```
+
+
 
 ---
 
-# Spéculation
+class: split-the-code
+
+# Out-of-order
+
+```c
+int main(void) {
+    int  a = 0;
+    int* b = &a;
+    int  c = 5;
+
+    *b = 4;
+    a++;
+    c = c * c;
+
+    if (a == *b)
+        return a + c;
+
+    return 0;
+}
+```
+
+```asm
+main:
+    mov eax, 30
+    ret
+```
+
+---
+
+class: split-the-code
+
+# Out-of-order
+
+```c
+int main(void) {
+    int  a = 0;
+    int* b = &a;
+    int  c = 5;
+
+    *b = 4;
+    a++;
+    c = c * c;
+
+    if (a == *b)
+        return a + c;
+
+    return 0;
+}
+```
+
+```asm
+main:
+    mov eax, 0          # a = 0
+    push eax
+    lea edx, [ebp - 4]  # b = &a
+    mov ecx, 5          # c = 5
+    mov ebx, [edx]      
+    add ebx, 4          # b = 4
+    mov [ebp - 4], ebx  
+    mov eax, [ebp - 4]
+    inc eax             # a++
+    mov [ebp - 4], eax
+    push eax
+    mov eax, ecx
+    imul ecx            # c = c * c
+    mov ecx, eax
+    pop eax
+    mov edx, [ebp - 4]
+    cmp eax, edx        # if (a == *b)
+    je equals
+    mov eax, 0          # return 0
+    add esp, 8
+    ret
+
+equals:
+    add eax, ecx        # return a + c
+    add esp, 8
+    ret
+```
 
 ---
 
