@@ -59,6 +59,18 @@
           max-width: 100%;
       }
 
+      .full {
+          display: grid;
+      }
+      table {
+          border-collapse: collapse;
+      }
+      td, th {
+          border: 1px solid #cccccc;
+          height: 2em;
+          width: 3vh;
+      }
+
     </style>
   </head>
   <body>
@@ -100,9 +112,37 @@ class: middle, center
 
 # Fetch, Decode, Execute, etc.
 
+.full[
+|  Clock  | 1  | 2  | 3  | 4  | 5  | 6 | 7 |
+|---------|----|----|----|----|----|---|---|
+| Fetch   | A  |    |    | B  |    |   | C |
+| Decode  |    | A  |    |    | B  |   |   |
+| Execute |    |    | A  |    |    | B |   ||
+]
+
 ???
 
-Elles-mêmes décomposées en sous-cycles.
+Ces étapes sont mêmes décomposées en sous-cycles: entre decode et execute, va
+chercher les opérandes qui sont en mémoire ; execute va également écrire le
+résultat au bon endroit, etc.
+
+---
+
+class: middle, center
+
+# Pipelining
+
+.full[
+|  Clock  | 1  | 2  | 3  | 4  | 5  | 6 | 7 |
+|---------|----|----|----|----|----|---|---|
+| Fetch   | A  | B  | C  | D  |    |   |   |
+| Decode  |    | A  | B  | C  | D  |   |   |
+| Execute |    |    | A  | B  | C  | D |   ||
+]
+
+???
+
+Marche aussi conceptuellement s'il y a plus d'étapes.
 
 ---
 
