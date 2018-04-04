@@ -13,6 +13,10 @@
           background-color: #0d47a1;
       }
 
+      .white-bg {
+          background-color: white;
+      }
+
       body {
           font-family: 'Playfair Display', serif;
           color: #e8eaf6;
@@ -94,11 +98,11 @@ class: center, middle
 
 # Spectre et Meltdown
 
-### Des failles qui vont vous hanter très longtemps
+### Des failles qui vont vous hanter pendant longtemps
 
 ???
 
-Notes de celui qui parle. Si vous voyez cela, il y a un raté quelque part.
+Notes de celui qui parle. Si vous voyez cela, on a raté un truc.
 
 ---
 
@@ -116,9 +120,33 @@ Se présenter, etc.
 
 class: middle, center
 
-# Les processeurs
+# L'évolution des performances
 
-### Un peu d'histoire
+### Ou comment monter un meuble en kit efficacement
+
+???
+
+Warning : métaphore filée, avec ses limites, etc.
+
+---
+
+background-image: url('./img/ikea-pipeline.png')
+background-size: 100% auto
+class: white-bg
+
+???
+
+Un CPU lit une suite d'instructions de la meme maniere qu'un humain lit
+une notice IKEA : d'abord il va récupérer l'instruction en la lisant (fetch),
+puis il va l'interpréter et récupérer ce dont il a besoin avant de faire ce
+qu'il désire (decode), puis il va exécuter ce qu'il faut faire et stocker le
+résultat quelque part (execute).
+
+Première manière de faire : vis par vis : aller lire, prendre la vis, puis
+visser.
+Autre manière plus rapide : une fois que la premiere personne a fini de lire le
+manuel, une seconde personne peut lire le manuel pendant que la première
+commence à récupérer la vis.
 
 ---
 
@@ -181,8 +209,6 @@ int main(void) {
 }
 ```
 
-
-
 ---
 
 class: split-the-code
@@ -241,9 +267,9 @@ main:
     push eax
     lea edx, [ebp - 4]  # b = &a
     mov ecx, 5          # c = 5
-    mov ebx, [edx]      
+    mov ebx, [edx]
     add ebx, 4          # b = 4
-    mov [ebp - 4], ebx  
+    mov [ebp - 4], ebx
     mov eax, [ebp - 4]
     inc eax             # a++
     mov [ebp - 4], eax
