@@ -13,10 +13,6 @@
           background-color: #0d47a1;
       }
 
-      .white-bg {
-          background-color: white;
-      }
-
       body {
           font-family: 'Playfair Display', serif;
           color: #e8eaf6;
@@ -26,6 +22,13 @@
           font-family: 'Zilla Slab', sans-serif;
           font-weight: normal;
           color: #e8eaf6;
+      }
+
+      .white-bg {
+          background-color: white;
+      }
+      .white-bg h1, .white-bg h2 {
+          color: black;
       }
 
       .link a {
@@ -345,17 +348,81 @@ equals:
 
 ---
 
-# Cache - Principe
+class: white-bg, center
+background-image: url('./img/cache.jpg')
+background-size: 50% auto
+
+# Cache
+
+???
+
+Localité temporelle : Les données utilisées récemment ont de grosses chances
+d'être réutilisées bientôt par la suite => les mettre à un endroit proche du
+processeur pour diminuer le temps d'accès (latence).
+
+=> Exemple : tournevis.
+
+Localité spatiale : les données proches d'une donnée utilisée récemment vont
+probablement être utilisées par la suite => regrouper les accès mémoire en
+lignes de cache.
+
+=> Exemple : vis.
+
+Application : plusieurs caches placés les uns à la suite des autres.
+
+Cache code vs cache données.
+
+Plus proche du processeur => plus rapide d'accès, plus cher aussi.
 
 ---
 
-# Cache - Attaques
+class: middle, center
+
+# Cache - Latences
+
+.full[
+|  Type  | Latence |
+|---------|----|
+| Cycle CPU (2Ghz)      | ~0.5 ns |
+| L1 cache reference    | ~0.5 ns |
+| L2 cache reference    | 4 ns |
+| Main memory reference | 100 ns |
+| 1MB data sequential read from memory       | 6,000 ns |
+| SSD random read       | 16,000 ns |
+| 1MB data sequential read from SSD       | 98,000 ns |
+| 1MB data sequential read from disk       | 1,000,000 ns |
+| Disk seek       | 3,000,000 ns |
+]
+
+???
+
+Latency numbers every programmer should know.
+
+---
+
+class: white-bg, middle, center
+
+![Spectre logo](./img/spectre.svg)
+
+---
+
+class: white-bg, center
+background-image: url('./img/timer.jpg')
+background-size: 50% auto
+
+## Cache-based side-channel attack
 
 ---
 
 class: middle, center
 
 # Q&A
+
+---
+
+# Références
+
+- Old watch : photo by Veri Ivanova on Unsplash.
 
 ---
 
