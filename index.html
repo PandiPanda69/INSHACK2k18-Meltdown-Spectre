@@ -469,16 +469,6 @@ class: split-the-code
 
 ---
 
-## Spéculation
-
-- Branch History Buffer
-    - Mapping entre `addr_src` et `addr_dest`
-
-- Branch Target Buffer
-    - Mapping des `(sizeof(addr) / 2) - 1` bits
-
----
-
 class: white-bg, center
 background-image: url('./img/cache.jpg')
 background-size: 50% auto
@@ -544,7 +534,7 @@ class: white-bg, center
 background-image: url('./img/timer.jpg')
 background-size: 50% auto
 
-## Cache-based side-channel attack
+## Cache-based side channel attack
 
 ???
 
@@ -552,9 +542,23 @@ background-size: 50% auto
 
 ---
 
-# Spectre : variante 1
+background-image: url('./img/blackjack.jpg')
+background-size: 50% auto
+class: white-bg, center
 
-```c
+# Branch Target Buffer
+
+???
+
+Quelle est la cible d'une branche (conditionnelle ou non) ?
+
+Est-ce qu'une branche va être prise ou non ?
+
+---
+
+# Variante 1
+
+```javascript
 let target_array = new Uint8Array(TARGET_SIZE);
 let probe_array = new Uint8Array(BIG_SIZE * 256);
 
@@ -565,7 +569,7 @@ let probe_array = new Uint8Array(BIG_SIZE * 256);
 let r = 0;
 if (index < target_array.length) {
     let read_value = target_array[index];
-    let x = probe_array[(read_value & 8) * BIG_SIZE];
+    let x = probe_array[(read_value & 255) * BIG_SIZE];
     r += x;
 }
 ```
@@ -586,6 +590,8 @@ for (let i = 0; i < 256; i++) {
 
 ???
 
+Disclaimer : ce code ne contient pas tous les éléments d'une attaque Spectre 2 et donc ne fonctionnera pas :)
+
 - Attaquant : entrainer la branche pour qu'elle soit toujours prise, afin que
 le prédicteur de branche.
 - s'arranger pour faire des appels valides avec des valeurs qui nous
@@ -595,9 +601,8 @@ intéressent, afin d'entrainer les caches.
 de la seconde lecture.
 - Besoin de timers haute précision pour mesurer le temps d'accès.
 
-Pas limité à des bounds checks, on peut le faire sur n'importe quelle adresse
-mémoire, avec n'importe quelle condition tant qu'un des opérandes n'est pas
-dans l'un des caches.
+Pas limité à des bounds checks : n'importe quelle condition suivie d'un accès
+mémoire peut être spéculé et doit donc être mitigé.
 
 Plusieurs preuves de concept dans tous les navigateurs.
 
@@ -650,7 +655,7 @@ if (index < target_array.length) {
 *   // Added by compiler:
 *   let new_index = index & target_array.MASK;
     let read_value = target_array[new_index];
-*   let new_index2 = ((read_value & 8) * BIG_SIZE) & probe_array.MASK;
+*   let new_index2 = ((read_value & 255) * BIG_SIZE) & probe_array.MASK;
     let x = probe_array[new_index2];
     r += x;
 }
@@ -670,7 +675,7 @@ in a specified state (or condition).
 
 --
 
-*not* speculated!
+Pas de branche ? Pas de spéculation de branches !
 
 --
 
@@ -680,7 +685,7 @@ if (index < target_array.length) {
 *   let new_index = index;
 *   new_index = cmovcc(new_index >= target_array.length, 0);
     let read_value = target_array[new_index];
-*   let new_index2 = ((read_value & 8) * BIG_SIZE);
+*   let new_index2 = ((read_value & 255) * BIG_SIZE);
 *   new_index2 = cmovcc(new_index2 >= probe_array.length, 0);
     let x = probe_array[new_index2];
     r += x;
@@ -689,19 +694,293 @@ if (index < target_array.length) {
 
 ---
 
-# Spectre : variante 2
+background-image: url('./img/blackjack.jpg')
+background-size: 50% auto
+class: white-bg, center
+
+# Branch History Buffer
 
 ???
 
-TODO
+Mapping entre un call indirect et les cibles possibles, lors des derniers
+appels récents (par ex. Haswell : 29 derniers appels).
 
 ---
 
-# Impact sur les performances
+# Variante 2
+
+--
+
+```javascript
+
+let probe_array = new Uint8Array(BIG_SIZE * 256);
+
+function targetFunc(username, password) {
+    // do stuff.
+}
+
+let r = 0;
+function attacker(a, b, c, d, e, f) {
+    // We want to read the password.
+    r += probe_array[(b & 255) * BIG_SIZE];
+}
+
+function main() {
+    var f = attacker;
+    for (var i = 0; i < 1000000; i++) {
+        f(i, i, i, i, i, i);
+        if (i === 999999) {
+            // Precondition: memory pointed by targetFunc is not in cache.
+            f = targetFunc;
+        }
+    }
+    // timing side-channel
+}
+
+```
 
 ???
 
-TODO : Screenshot AWFY
+Disclaimer : ce code ne contient pas tous les éléments d'une attaque Spectre 2
+et donc ne fonctionnera pas :)
+
+Une hash table en gros, qui ne prend en compte qu'une partie de l'adresse de la
+destination ! Il est donc possible d'entraîner le prédicteur de branches pour
+lui faire croire qu'une adresse de destination sera toujours atteinte, puis
+quand un autre call indirect a lieu, le code de la fonction prédite sera
+spéculativement exécuté jusqu'à ce que le processeur se rende compte qu'il
+s'agit en fait d'une erreur.
+
+Race condition entre le branch history buffer/branch target buffer et le
+déréférencement du pointeur de fonction : parce que le BHB permet de faire une
+prédiction de la cible de l'appel de fonction indirect, le code attaquant est
+spéculativement exécuté alors que le pointeur de fonction est déréférencé.
+
+---
+
+class: center, bigger
+
+# Mitigation
+
+```
+gcc -mindirect-branch=thunk-extern
+```
+
+--
+
+![Stop using indirect calls](./img/indirect-call.jpg)
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address
+inner_indirect_branch:
+    call actual
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax
+    ret
+setup_return_address:
+    call inner_indirect_branch
+next_instruction:
+```
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+*   jmp setup_return_address        ;; 1. jump to end
+inner_indirect_branch:
+    call actual
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax
+    ret
+setup_return_address:
+*   call inner_indirect_branch      ;; 2. push &next_instruction onto the stack
+next_instruction:
+```
+
+.full[
+  |Stack|
+  |--|
+  |&next_instruction|
+]
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address        ;; 1. jump to end
+inner_indirect_branch:
+*   call actual                     ;; 3. push &actual onto the stack
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax
+    ret
+setup_return_address:
+    call inner_indirect_branch      ;; 2. push &next_instruction onto the stack
+next_instruction:
+```
+
+.full[
+  |Stack|
+  |--|
+  |&next_instruction|
+  |&actual|
+]
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address        ;; 1. jump to end
+inner_indirect_branch:
+    call actual                     ;; 3. push &actual onto the stack
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+*   mov [esp], eax                  ;; 4. overwrites &actual on the stack with eax
+    ret
+setup_return_address:
+    call inner_indirect_branch      ;; 2. push &next_instruction onto the stack
+next_instruction:
+```
+
+.full[
+  |Stack|
+  |--|
+  |&next_instruction|
+  |~~&actual~~ -> eax|
+]
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address        ;; 1. jump to end
+inner_indirect_branch:
+    call actual                     ;; 3. push &actual onto the stack
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax                  ;; 4. overwrites &actual on the stack with eax
+*   ret                             ;; 5. indirect jump to eax :)
+setup_return_address:
+    call inner_indirect_branch      ;; 2. push &next_instruction onto the stack
+next_instruction:
+```
+
+.full[
+  |Stack|
+  |--|
+  |&next_instruction|
+]
+
+---
+
+# Mitigation : return trampoline
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address        ;; 1. jump to end
+inner_indirect_branch:
+    call actual                     ;; 3. push &actual onto the stack
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax                  ;; 4. overwrites &actual on the stack with eax
+    ret                             ;; 5. indirect jump to eax :)
+*                                   ;; 6. when function pointed by eax does a
+*                                   ;; ret, it will return to &next_instruction.
+setup_return_address:
+    call inner_indirect_branch      ;; 2. push &next_instruction onto the stack
+next_instruction:
+```
+
+.full[
+  |Stack|
+  |--|
+]
+
+---
+
+# Pourquoi ça marche
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address
+inner_indirect_branch:
+*   call actual                     ;; direct call
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax
+    ret
+setup_return_address:
+*   call inner_indirect_branch      ;; direct call
+next_instruction:
+```
+
+---
+
+# Pourquoi ça marche
+
+```asm
+;; eax contains a function pointer
+call_eax:
+    jmp setup_return_address
+inner_indirect_branch:
+    call actual
+iloop_fence:
+    lfence
+    jmp iloop_fence
+actual:
+    mov [esp], eax
+*   ret              ;; speculate here, but the return predictor speculates
+*                    ;; it returns at iloop_fence!
+setup_return_address:
+    call inner_indirect_branch
+next_instruction:
+```
+
+---
+
+background-image: url('./img/awfy.png')
+background-size: 100% auto
+class: white-bg
+
+???
+
+Impact sur les performances.
 
 ---
 
@@ -714,6 +993,7 @@ class: middle, center
 # Références / Sources
 
 - Old watch : photo by Veri Ivanova on Unsplash.
+- Blackjack : https://commons.wikimedia.org/wiki/File%3ABlackjack_board.JPG
 
 - https://webkit.org/blog/8048/what-spectre-and-meltdown-mean-for-webkit/
 
