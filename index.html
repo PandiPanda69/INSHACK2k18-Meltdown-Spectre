@@ -300,10 +300,10 @@ main:
     mov ebx, [edx]
     add ebx, 4          # b += 4
     mov [ebp - 4], ebx
-    mov eax, [ebp - 4]
-    inc eax             # a++
-    mov [ebp - 4], eax
-    push eax
+    mov edx, [ebp - 4]
+    inc edx             # a++
+    mov [ebp - 4], edx
+    push edx
     mov eax, ecx
     imul ecx            # c = c * c
     mov ecx, eax
@@ -319,6 +319,60 @@ equals:
     add eax, ecx        # return a + c
     add esp, 8
     ret
+```
+
+---
+
+class: split-the-code
+
+## Out-of-order
+
+```c
+    *b += 4;    // int* b = &a;
+    a++;
+    c = c * c;
+```
+
+```asm
+    add ebx, 4          # b += 4
+*   mov [ebp - 4], ebx
+    ################################
+    mov edx, [ebp - 4]
+    inc edx             # a++
+    mov [ebp - 4], edx
+    push edx
+    ################################
+    mov eax, ecx
+    imul ecx            # c = c * c
+    mov ecx, eax
+    pop eax
+```
+
+---
+
+class: split-the-code
+
+## Out-of-order
+
+```c
+    *b += 4;    // int* b = &a;
+    a++;
+    c = c * c;
+```
+
+```asm
+    add ebx, 4          # b += 4
+*   mov [ebp - 4], ebx
+    ################################
+    mov edx, [ebp - 4]
+    inc edx             # a++
+    mov [ebp - 4], edx
+    push edx
+    ################################
+*   mov eax, ecx
+*   imul ecx            # c = c * c
+*   mov ecx, eax
+    pop eax
 ```
 
 ---
@@ -353,8 +407,9 @@ class: split-the-code
 ```
 
 ```asm
-    mov edx, [ebp - 4]
-    cmp eax, edx        # if (a == *b)
+    pop eax
+
+*   cmp eax, [ebp - 4]  # if (a == *b)
     je equals
     mov eax, 0          # return 0
     add esp, 8
@@ -369,9 +424,44 @@ equals:
 
 ---
 
+class: split-the-code
+
+## Spéculation
+
+```c
+    void(*func_ptr) (int) = NULL;
+
+    func_ptr = foo;
+    func_ptr(5);
+```
+
+```asm
+    mov eax, 0      # func_ptr = NULL
+
+    mov eax, [foo]  # func_ptr = foo
+    push 5
+*   call eax        # func_ptr(5)
+    sub edp, 4
+```
+
+---
+
+## Spéculation
+
+- Branch History Buffer
+    - Mapping entre `addr_src` et `addr_dest`
+
+- Branch Target Buffer
+    - Mapping des `(sizeof(addr) / 2) - 1` bits 
+
+
+---
+
 class: white-bg, center
 background-image: url('./img/cache.jpg')
 background-size: 50% auto
+
+---
 
 # Cache
 
@@ -508,6 +598,10 @@ class: bigger
 --
 
 - `performance.now()` += erreur aléatoire
+
+---
+
+# Cache - Principe
 
 ---
 
