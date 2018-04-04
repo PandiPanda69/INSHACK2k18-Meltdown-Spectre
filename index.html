@@ -99,6 +99,10 @@
           border: none;
       }
 
+      .float-right {
+          float: right;
+      }
+
     </style>
   </head>
   <body>
@@ -471,16 +475,13 @@ class: split-the-code
     - Mapping entre `addr_src` et `addr_dest`
 
 - Branch Target Buffer
-    - Mapping des `(sizeof(addr) / 2) - 1` bits 
-
+    - Mapping des `(sizeof(addr) / 2) - 1` bits
 
 ---
 
 class: white-bg, center
 background-image: url('./img/cache.jpg')
 background-size: 50% auto
-
----
 
 # Cache
 
@@ -620,7 +621,16 @@ class: bigger
 
 ---
 
-# Cache - Principe
+class: bigger
+
+# Mitigations : lfence
+
+`The software mitigation that Intel recommends is to insert a barrier to stop
+speculation in appropriate places.`
+
+--
+
+.float-right[![nope](./img/nope.jpg)]
 
 ---
 
