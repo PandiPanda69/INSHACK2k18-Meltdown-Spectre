@@ -61,6 +61,9 @@
       .bigger img {
           height: 10em;
       }
+      .bigger .remark-inline-code {
+          font-size: 1em;
+      }
 
       .flex {
           display: flex;
@@ -131,6 +134,8 @@ class: middle, center
 
 Warning : métaphore filée, avec ses limites, etc.
 
+(Benjamin)
+
 ---
 
 background-image: url('./img/ikea-pipeline.png')
@@ -138,6 +143,8 @@ background-size: 50% auto
 class: white-bg
 
 ???
+
+(Benjamin)
 
 Un CPU lit une suite d'instructions de la meme maniere qu'un humain lit
 une notice IKEA : d'abord il va récupérer l'instruction en la lisant (fetch),
@@ -167,6 +174,8 @@ class: middle, center
 
 ???
 
+(Benjamin)
+
 Ces étapes sont mêmes décomposées en sous-cycles: entre decode et execute, va
 chercher les opérandes qui sont en mémoire ; execute va également écrire le
 résultat au bon endroit, etc.
@@ -187,6 +196,8 @@ class: middle, center
 
 ???
 
+(Benjamin)
+
 Marche aussi conceptuellement s'il y a plus d'étapes.
 
 ---
@@ -200,6 +211,10 @@ class: middle, center
 background-image: url('./img/ikea-out-of-order.png')
 background-size: 100% auto
 class: white-bg
+
+???
+
+(Sebastien)
 
 ---
 
@@ -318,6 +333,12 @@ background-image: url('./img/ikea-speculation.png')
 background-size: 100% auto
 class: white-bg
 
+???
+
+(Sebastien)
+
+jusqu'a 200 instructions exécutées spéculativement.
+
 ---
 
 class: split-the-code
@@ -374,6 +395,9 @@ Cache code vs cache données.
 
 Plus proche du processeur => plus rapide d'accès, plus cher aussi.
 
+- Politique d'évictions différentes (LRU pour L1, LRU/MRU pour L3)
+- Mapping peu documenté (reverse engineeré)
+
 ---
 
 class: middle, center
@@ -396,7 +420,7 @@ class: middle, center
 
 ???
 
-Latency numbers every programmer should know.
+Extrait de "Latency numbers every programmer should know."
 
 ---
 
@@ -412,6 +436,150 @@ background-size: 50% auto
 
 ## Cache-based side-channel attack
 
+???
+
+(Benjamin, pendant que Seb fait la démo)
+
+---
+
+# Spectre : variante 1
+
+```c
+let target_array = new Uint8Array(TARGET_SIZE);
+let probe_array = new Uint8Array(BIG_SIZE * 256);
+
+...
+
+// Precondition: - target_array_length not in cache,
+//               - index, target_array[index], probe_array in cache.
+let r = 0;
+if (index < target_array.length) {
+    let read_value = target_array[index];
+    let x = probe_array[(read_value & 8) * BIG_SIZE];
+    r += x;
+}
+```
+
+--
+
+```
+let hits = new Uint8Array(256);
+let r = 0;
+for (let i = 0; i < 256; i++) {
+      let before = performance.now();
+      r = probe_array[i];
+      if (performance.now() - before < THRESHOLD) {
+          hits[i]++;
+      }
+}
+```
+
+???
+
+- Attaquant : entrainer la branche pour qu'elle soit toujours prise, afin que
+le prédicteur de branche.
+- s'arranger pour faire des appels valides avec des valeurs qui nous
+intéressent, afin d'entrainer les caches.
+
+- Race condition entre la vérification de la branche et l'exécution spéculative
+de la seconde lecture.
+- Besoin de timers haute précision pour mesurer le temps d'accès.
+
+Pas limité à des bounds checks, on peut le faire sur n'importe quelle adresse
+mémoire, avec n'importe quelle condition tant qu'un des opérandes n'est pas
+dans l'un des caches.
+
+Plusieurs preuves de concept dans tous les navigateurs.
+
+---
+
+class: bigger
+
+# Mitigations : timers
+
+--
+
+- API `SharedArrayBuffer` dans les navigateurs
+
+--
+
+- Résolution de `performance.now()` diminuée
+
+--
+
+- `performance.now()` += erreur aléatoire
+
+---
+
+class: bigger
+
+# Mitigations : mask
+
+Arrondir les tailles de tableaux à la puissance de deux supérieure.
+
+--
+
+```
+// Say target_array.length is really 23,
+// rounded by the compiler to 32 = 0b00100000.
+// Then target_array.MASK = 0b00011111.
+if (index < target_array.length) {
+*   // Added by compiler:
+*   let new_index = index & target_array.MASK;
+    let read_value = target_array[new_index];
+*   let new_index2 = ((read_value & 8) * BIG_SIZE) & probe_array.MASK;
+    let x = probe_array[new_index2];
+    r += x;
+}
+```
+
+---
+
+class: bigger
+
+# Mitigations : `cmovcc`
+
+--
+
+`cmovcc`: check the state of one or more of the status flags in the EFLAGS
+register (CF, OF, PF, SF, and ZF) and perform a move operation if the flags are
+in a specified state (or condition).
+
+--
+
+*not* speculated!
+
+--
+
+```
+if (index < target_array.length) {
+*   // Added by compiler:
+*   let new_index = index;
+*   new_index = cmovcc(new_index >= target_array.length, 0);
+    let read_value = target_array[new_index];
+*   let new_index2 = ((read_value & 8) * BIG_SIZE);
+*   new_index2 = cmovcc(new_index2 >= probe_array.length, 0);
+    let x = probe_array[new_index2];
+    r += x;
+}
+```
+
+---
+
+# Spectre : variante 2
+
+???
+
+TODO
+
+---
+
+# Impact sur les performances
+
+???
+
+TODO : Screenshot AWFY
+
 ---
 
 class: middle, center
@@ -420,9 +588,11 @@ class: middle, center
 
 ---
 
-# Références
+# Références / Sources
 
 - Old watch : photo by Veri Ivanova on Unsplash.
+
+- https://webkit.org/blog/8048/what-spectre-and-meltdown-mean-for-webkit/
 
 ---
 
