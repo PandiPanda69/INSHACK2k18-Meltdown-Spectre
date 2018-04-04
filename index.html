@@ -202,7 +202,7 @@ class: white-bg
 
 class: split-the-code
 
-# Out-of-order
+## Out-of-order
 
 ```c
 int main(void) {
@@ -210,7 +210,7 @@ int main(void) {
     int* b = &a;
     int  c = 5;
 
-    *b = 4;
+    *b += 4;
     a++;
     c = c * c;
 
@@ -225,7 +225,7 @@ int main(void) {
 
 class: split-the-code
 
-# Out-of-order
+## Out-of-order
 
 ```c
 int main(void) {
@@ -233,7 +233,7 @@ int main(void) {
     int* b = &a;
     int  c = 5;
 
-    *b = 4;
+    *b += 4;
     a++;
     c = c * c;
 
@@ -254,7 +254,7 @@ main:
 
 class: split-the-code
 
-# Out-of-order
+## Out-of-order
 
 ```c
 int main(void) {
@@ -262,7 +262,7 @@ int main(void) {
     int* b = &a;
     int  c = 5;
 
-    *b = 4;
+    *b += 4;
     a++;
     c = c * c;
 
@@ -280,7 +280,7 @@ main:
     lea edx, [ebp - 4]  # b = &a
     mov ecx, 5          # c = 5
     mov ebx, [edx]
-    add ebx, 4          # b = 4
+    add ebx, 4          # b += 4
     mov [ebp - 4], ebx
     mov eax, [ebp - 4]
     inc eax             # a++
@@ -301,6 +301,46 @@ equals:
     add eax, ecx        # return a + c
     add esp, 8
     ret
+```
+
+---
+
+class: middle, center
+
+## Spéculation
+
+---
+
+background-image: url('./img/ikea-speculation.png')
+background-size: 100% auto
+class: white-bg
+
+---
+
+class: split-the-code
+
+## Spéculation
+
+```c
+    if (a == *b)
+        return a + c;
+
+    return 0;
+```
+
+```asm
+    mov edx, [ebp - 4]
+    cmp eax, edx        # if (a == *b)
+    je equals
+    mov eax, 0          # return 0
+    add esp, 8
+    ret
+
+equals:
+    add eax, ecx        # return a + c
+    add esp, 8
+    ret
+
 ```
 
 ---
