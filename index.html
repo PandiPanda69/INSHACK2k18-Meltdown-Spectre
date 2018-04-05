@@ -572,7 +572,7 @@ class: white-bg, middle, center
 ---
 
 class: white-bg, center
-background-image: url('./img/tableaux.jpg')
+background-image: url('./img/clockwatch.jpg')
 background-size: 70% auto
 
 ## Cache-based side channel attack
@@ -1023,20 +1023,14 @@ next_instruction:
 
 ---
 
-background-image: url('./img/awfy.png')
-background-size: 100% auto
-class: white-bg
-
----
-
-class: center
+class: center, bigger
 
 ## Mitigation : d'autres pistes explorées
 
-Indirect Branch Restricted Speculation (IBRS)
+*Indirect Branch Restricted Speculation* (IBRS)
 
-Indirect Branch Prediction Barrier (IBPB)
-<br/><br/><br/>
+*Indirect Branch Prediction Barrier* (IBPB)
+<br/>
 
 .left[
 Exploitation des bits de contrôle permettant de désactiver la spéculation au niveau du CPU
@@ -1044,6 +1038,18 @@ Exploitation des bits de contrôle permettant de désactiver la spéculation au 
 - Performances désastreuses
     - Abandon au profit de retpoline
 ]
+
+---
+
+class: middle, center
+
+# Et les perfs ?
+
+---
+
+background-image: url('./img/awfy.png')
+background-size: 100% auto
+class: white-bg
 
 ---
 
@@ -1058,7 +1064,7 @@ class: middle, center, bigger
 
 ### Combinaison de 3 facteurs
 
-<br/><br/>
+<br/>
 
 Exécution Out-Of-Order
 
@@ -1096,7 +1102,7 @@ retry:
 
 --
 
-3. Début du Out-Of-Order. 
+3. Début du Out-Of-Order.
 4. Préparation des µOpcodes.
 
 --
@@ -1298,7 +1304,7 @@ class: middle, center
 # Références / Sources
 
 - Blackjack : https://commons.wikimedia.org/wiki/File%3ABlackjack_board.JPG
-- Tableaux: https://www.pinterest.fr/pin/503136589601335794/
+- Clockwatch : Veri Ivanova https://unsplash.com/photos/p3Pj7jOYvnM
 
 - https://www.spectreattack.com
 - https://www.meltdownattack.com
