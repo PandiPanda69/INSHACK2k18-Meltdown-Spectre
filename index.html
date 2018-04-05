@@ -724,9 +724,19 @@ in a specified state (or condition).
 
 --
 
-Pas de branche ? Pas de spéculation de branches !
+.center[
+![Pas de branche, pas de spéculation !](./img/no-branch-no-spec.jpg)
+]
 
---
+---
+
+class: bigger
+
+# Mitigations : `cmovcc`
+
+`cmovcc`: check the state of one or more of the status flags in the EFLAGS
+register (CF, OF, PF, SF, and ZF) and perform a move operation if the flags are
+in a specified state (or condition).
 
 ```
 if (index < target_array.length) {
@@ -1310,9 +1320,8 @@ class: center, middle, hidden-table
 |@bnjbvr|@smeriot|
 ]
 
-<br/>
-
 #### INSHACK Lyon - 5 Avril 2018
+https://pandipanda69.github.io/INSHACK2k18-Meltdown-Spectre
 
 
 ---
