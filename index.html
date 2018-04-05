@@ -43,7 +43,6 @@
 
       .split-the-code>pre {
           width: 49%;
-          height: 100%;
           display: inline-block;
           margin-right: 2px;
           vertical-align: top;
@@ -53,6 +52,10 @@
 
       .split-the-code>pre>code {
           height: 100%;
+      }
+
+      .split-the-code.tiny-code>pre {
+          height: 75px !important;
       }
 
       .bigger {
@@ -286,9 +289,18 @@ int main(void) {
 ```
 
 ```asm
+# Dans la vraie vie...
+
 main:
     mov eax, 30
     ret
+
+
+
+
+# Les codes présentés sont des
+# illustrations, nullement des
+# exploits (heureusement).
 ```
 
 ---
@@ -986,9 +998,204 @@ background-image: url('./img/awfy.png')
 background-size: 100% auto
 class: white-bg
 
-???
+---
 
-Impact sur les performances.
+background-image: url('./img/meltdown.svg')
+class: bottom, center, bigger
+
+---
+
+class: middle, center, bigger
+
+# Meltdown
+
+### Combinaison de 3 facteurs
+
+<br/><br/>
+
+Exécution Out-Of-Order
+
++
+
+Attaque sur les caches
+
++
+
+Lectures mémoire non vérifiées
+
+---
+
+.center[
+# Meltdown
+]
+
+```asm
+# rcx = kernel address
+# rbx = probe array
+retry:
+*   mov al, byte [rcx]      # Inaccessible kernel address
+    shl rax, 12
+    jz retry
+    mov rbx, [rbx + rax]
+```
+
+--
+
+1. Fetch, decode, execute.
+
+--
+
+2. Lecture en RAM.
+
+--
+
+3. Début du Out-Of-Order. 
+4. Préparation des µOpcodes.
+
+--
+
+5. Lecture en RAM terminée.
+6. µOpcodes executés.
+
+--
+
+7. Exception: lecture d'adresse interdite.
+8. Valeur des registres annulées.
+
+---
+
+.center[
+# Meltdown
+]
+
+```asm
+# rcx = kernel address
+# rbx = probe array
+retry:
+    mov al, byte [rcx]      # Inaccessible kernel address
+    shl rax, 12
+    jz retry
+*   mov rbx, [rbx + rax]    # Covert channel
+```
+
+--
+
+Possibilité de connaître la valeur qui était à l'adresse mémoire !
+- Vider le cache (`clflush`)
+- Découvrir quelle valeur est en cache
+    - byte = (offset >> 12)
+
+--
+
+Félicitations !
+- Vous avez lu la mémoire du Kernel depuis le User-land.
+- Oh? Wait !
+
+---
+
+## Rappels sur la gestion de la mémoire
+
+MMU: Memory Management Unit
+- Adresses mémoires logiques <-> Adresses mémoires physiques
+    - Création de pages mémoires avec des attributs: rwx
+    - Ring: <em>Supervisor mode</em> vs <em>User mode</em> (CS register)
+
+--
+
+<br/>
+
+.split-the-code.tiny-code[
+```c
+    char *str = "Hello world";
+    *str = 'A';
+    printf("%s\n", str);
+```
+
+```c
+    char str[] = "Hello world";
+    *str = 'A';
+    printf("%s\n", str);
+```
+]
+
+--
+
+.split-the-code.tiny-code[
+```bash
+    $ ./prog
+    Segmentation fault
+
+    # Segment .rodata = Read-Only
+```
+```bash
+    $ ./prog
+    Aello world
+
+    # Segment .text = Read/Write
+```
+]
+
+---
+
+## Rappels sur la gestion de la mémoire
+
+```c
+int main()
+{
+    int pid;
+
+*   pid = getpid();             // syscall
+    printf("PID: %d\n", pid);
+
+    return 0;
+}
+```
+
+--
+
+- Lecture de l'adresse de <em>getpid</em>.
+- Execution de <em>getpid</em>:
+    - Passage en mode <em>Supervisor</em>.
+    - Lecture de la mémoire contenant le PID.
+    - Passage en mode <em>User</em> pour rendre la main.
+
+--
+<br/><br/>
+
+=> Uniquement possible si la mémoire du kernel est adressable par le processus.
+
+---
+
+## Mitigations
+
+#### 1. KPTI - Kernel Page Table Isolation
+
+- La mémoire du kernel adressable par le processus est réduite au minimum:
+    - Interrupt Descriptor Table (IDT)
+
+
+- Appels systèmes via des interruptions (0x80):
+    - Le handler se déclenche.
+    - Le registre CS est positionné en <em>Supervisor Mode</em> de facto.
+
+---
+
+background-image: url('./img/online-pti.jpg')
+
+---
+
+## Mitigations
+
+#### 2. UDEREF
+
+- Userland DEREFerence
+- Inclus dans grsecurity depuis longtemps
+    - Discuté par la PaX Team depuis 2007
+
+- Durcissement du partage de la mémoire entre Kernel-land et User-land
+    - Evite les interruptions
+    - Utilisation des registres GDT/LDT pour la segmentation mémoire
+        - Réduit drastiquement la mémoire adressable par le processus
 
 ---
 
