@@ -150,6 +150,35 @@ Se présenter, etc.
 
 ---
 
+.center[
+# Comme un vent de panique
+]
+
+<br/><br/>
+
+
+> Apologies for the discombobulation around today's disclosure.  Obviously the
+original goal was to communicate this a little more coherently, but the
+unscheduled advances in the disclosure disrupted the efforts to pull this
+together more cleanly.
+>
+.right[
+> &dash; LKML, 04/01/2018 9h10 CET
+]
+
+--
+
+<br/>
+
+- 2016 - Découverte du contournement de l'ASLR et de SMAP
+- Début 2017 - Découverte de Spectre & Meltdown
+- Mi-2017: Communication avec les acteurs concernés
+- Décembre 2017 - Patchs étranges dans le Kernel Linux (KAISER/KPTI)
+- 04/01/2018 - Early Disclosure
+- Chaos.
+
+---
+
 class: middle, center
 
 # L'évolution des performances
@@ -543,8 +572,8 @@ class: white-bg, middle, center
 ---
 
 class: white-bg, center
-background-image: url('./img/timer.jpg')
-background-size: 50% auto
+background-image: url('./img/tableaux.jpg')
+background-size: 70% auto
 
 ## Cache-based side channel attack
 
@@ -671,6 +700,14 @@ if (index < target_array.length) {
     let x = probe_array[new_index2];
     r += x;
 }
+```
+
+--
+
+Mitigation également adoptée dans le kernel
+
+```c
+    mask = ~(long)(index | (size - 1 - index)) >> (BITS_PER_LONG - 1);
 ```
 
 ---
@@ -986,17 +1023,27 @@ next_instruction:
 
 ---
 
-class: middle, center
-
-# Mitigation : nouvelles instructions
-
-### Micro-code update
-
----
-
 background-image: url('./img/awfy.png')
 background-size: 100% auto
 class: white-bg
+
+---
+
+class: center
+
+## Mitigation : d'autres pistes explorées
+
+Indirect Branch Restricted Speculation (IBRS)
+
+Indirect Branch Prediction Barrier (IBPB)
+<br/><br/><br/>
+
+.left[
+Exploitation des bits de contrôle permettant de désactiver la spéculation au niveau du CPU
+- Rendu possible via un nouveau µCode
+- Performances désastreuses
+    - Abandon au profit de retpoline
+]
 
 ---
 
@@ -1089,7 +1136,14 @@ Possibilité de connaître la valeur qui était à l'adresse mémoire !
 
 Félicitations !
 - Vous avez lu la mémoire du Kernel depuis le User-land.
-- Oh? Wait !
+
+---
+
+background-image: url('./img/wat.jpg')
+background-size: 80% auto
+
+### Lire la mémoire Kernel depuis le User-land
+
 
 ---
 
@@ -1180,6 +1234,8 @@ int main()
 
 ---
 
+Load average - Hébergement mutualisé Online
+
 background-image: url('./img/online-pti.jpg')
 
 ---
@@ -1198,8 +1254,6 @@ background-image: url('./img/online-pti.jpg')
         - Réduit drastiquement la mémoire adressable par le processus
 
 ---
-
-class: middle
 
 # Le chaos
 
@@ -1242,10 +1296,17 @@ class: middle, center
 
 # Références / Sources
 
-- Old watch : photo by Veri Ivanova on Unsplash.
 - Blackjack : https://commons.wikimedia.org/wiki/File%3ABlackjack_board.JPG
+- Tableaux: https://www.pinterest.fr/pin/503136589601335794/
+
+- https://www.spectreattack.com
+- https://www.meltdownattack.com
 
 - https://webkit.org/blog/8048/what-spectre-and-meltdown-mean-for-webkit/
+- KAISER: hiding the kernel from user space, https://lwn.net/Articles/738975/
+- Meltdown/Spectre mitigation for 4.15 and beyond, https://lwn.net/Articles/744287/
+- UDEREF, https://grsecurity.net/~spender/uderef.txt
+- Google Project Zero Blogpost, https://googleprojectzero.blogspot.fr/2018/01/reading-privileged-memory-with-side.html
 
 ---
 
