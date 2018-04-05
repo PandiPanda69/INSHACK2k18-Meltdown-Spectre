@@ -31,7 +31,7 @@
           color: black;
       }
 
-      .link a {
+      a {
           text-decoration: none;
           color: #9fa8da;
       }
@@ -974,6 +974,14 @@ next_instruction:
 
 ---
 
+class: middle, center
+
+# Mitigation : nouvelles instructions
+
+### Micro-code update
+
+---
+
 background-image: url('./img/awfy.png')
 background-size: 100% auto
 class: white-bg
@@ -981,6 +989,41 @@ class: white-bg
 ???
 
 Impact sur les performances.
+
+---
+
+class: middle
+
+# Le chaos
+
+- Intel émet des mises à jour de micro-code [(source)](https://liliputing.com/2018/02/intel-rolls-spectre-updates-6th-7th-8th-gen-core-chips.html).
+
+--
+
+- Mais pas sur les CPUs les plus anciens [(source)](https://liliputing.com/2018/04/intel-wont-release-spectre-patches-for-some-older-chips-after-all.html).
+
+--
+
+- La 8ème génération de processeurs Intel aura une protection intégrée contre
+Spectre
+[(source)](https://www.techspot.com/news/73736-intel-upcoming-8th-generation-cascade-lake-processors-have.html).
+
+--
+
+- {Spectre,Meltdown}Prime, variantes basées sur un side channel prime&probe +
+variante multi-coeurs
+[(source)](https://www.theregister.co.uk/2018/02/14/meltdown_spectre_exploit_variants/).
+
+--
+
+- Inspirée de Spectre 2, BranchScope permet de détecter si une branche est prise ou non
+[(source)](https://arstechnica.com/gadgets/2018/03/its-not-just-spectre-researchers-reveal-more-branch-prediction-attacks/).
+
+--
+
+- Un patch de Windows pour Meltdown a permis la lecture de toute la mémoire à une
+vitesse en gigabits par seconde
+[(source)](https://blog.frizk.net/2018/03/total-meltdown.html).
 
 ---
 
